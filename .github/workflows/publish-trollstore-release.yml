@@ -32,7 +32,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  ARTIFACT_NAME: Reynard-TrollStore-iPhoneSE3-iOS15.4.tipa
+  ARTIFACT_NAME: Reynard-TrollStore.tipa
   RELEASE_TAG: trollstore-iphone-se3-ios15.4
 
 jobs:
@@ -72,7 +72,7 @@ jobs:
             core.info(`Publishing from run ${run.id}`);
             core.setOutput('run_id', String(run.id));
 
-      - name: Download TIPA artifact
+      - name: Download universal TIPA artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ env.ARTIFACT_NAME }}
@@ -88,17 +88,44 @@ jobs:
           unzip -tqq "$file"
           echo "Verified $file ($(du -h "$file" | cut -f1))"
 
+      - name: Keep only one release asset
+        uses: actions/github-script@v9
+        env:
+          TAG: ${{ inputs.tag || env.RELEASE_TAG }}
+          WANTED: ${{ env.ARTIFACT_NAME }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const tag = process.env.TAG;
+            const wanted = process.env.WANTED;
+            let release;
+            try {
+              release = (await github.rest.repos.getReleaseByTag({ owner, repo, tag })).data;
+            } catch (error) {
+              if (error.status === 404) {
+                core.info(`Release ${tag} does not exist yet; nothing to clean up.`);
+                return;
+              }
+              throw error;
+            }
+            for (const asset of release.assets) {
+              if (asset.name === wanted) continue;
+              await github.rest.repos.deleteReleaseAsset({ owner, repo, asset_id: asset.id });
+              core.info(`Removed stale asset ${asset.name}`);
+            }
+
       - name: Create or update release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ inputs.tag || env.RELEASE_TAG }}
-          name: Reynard — TrollStore (iPhone SE 3 / iOS 15.4)
+          name: Reynard — TrollStore (universal arm64)
           body: |
-            TrollStore build of Reynard for iPhone SE 3 (A15 / iPhone14,6) on iOS 15.4.
+            Universal TrollStore build of Reynard. This package is not device-specific.
 
             - Source Actions run: ${{ steps.source.outputs.run_id }}
-            - arm64, `MinimumOSVersion` ≤ 15.4, TrollStore JIT helper included
-            - Install with TrollStore on iOS 14 - 16.6.1 or 17.0
+            - arm64, no device restrictions, `MinimumOSVersion` ≤ 15.4 (verified in CI)
+            - Includes the TrollStore JIT helper (`ts_ptrace_jit`)
+            - Install with TrollStore on iOS 14 - 16.6.1 or 17.0; iPhone SE 3 on iOS 15.4 is one supported target
           draft: false
           prerelease: false
           fail_on_unmatched_files: true
@@ -110,5 +137,5 @@ jobs:
           {
             echo "### Published TrollStore TIPA"
             echo ""
-            echo "Artifact \`$ARTIFACT_NAME\` from run ${{ steps.source.outputs.run_id }} is attached to release \`${{ inputs.tag || env.RELEASE_TAG }}\`."
+            echo "Universal artifact \`$ARTIFACT_NAME\` from run ${{ steps.source.outputs.run_id }} is the only asset of release \`${{ inputs.tag || env.RELEASE_TAG }}\`."
           } >> "$GITHUB_STEP_SUMMARY"
