@@ -203,3 +203,14 @@ jobs:
           name: Reynard-Jailbroken.ipa
           path: dist/Reynard-Jailbroken.ipa
           if-no-files-found: error
+
+      - name: Report job timeout
+        if: cancelled()
+        shell: bash
+        run: |
+          {
+            echo "### Build stopped before producing an artifact"
+            echo ""
+            echo "GitHub-hosted runners have a hard 6-hour limit per job. A cold Gecko build can exceed it."
+            echo "sccache objects are saved incrementally during compilation, so simply re-running this workflow should be significantly faster."
+          } >> "$GITHUB_STEP_SUMMARY"

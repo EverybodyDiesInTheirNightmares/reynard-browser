@@ -20,9 +20,12 @@ on:
 permissions:
   contents: read
 
+# GitHub-hosted runners have a hard 6-hour per-job limit. A cold Gecko build
+# can exceed it; sccache objects are saved incrementally, so a retry is much
+# faster. Never cancel an in-progress build because of a new push.
 concurrency:
   group: trollstore-iphone-se3-ios15-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
