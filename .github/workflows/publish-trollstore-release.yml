@@ -1,0 +1,103 @@
+name: Publish TrollStore TIPA to Release
+
+on:
+  workflow_run:
+    workflows: ["Build TrollStore TIPA (iPhone SE 3 / iOS 15.4)"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Actions run id to publish from (empty uses the latest successful build)
+        required: false
+        default: ''
+        type: string
+      tag:
+        description: Release tag
+        required: false
+        default: 'trollstore-iphone-se3-ios15.4'
+        type: string
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/publish-trollstore-release.yml'
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: publish-trollstore-release
+  cancel-in-progress: false
+
+env:
+  ARTIFACT_NAME: Reynard-TrollStore-iPhoneSE3-iOS15.4.tipa
+  RELEASE_TAG: trollstore-iphone-se3-ios15.4
+
+jobs:
+  publish:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve source run
+        id: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPLICIT_RUN_ID: ${{ inputs.source_run_id || (github.event_name == 'workflow_run' && github.event.workflow_run.id) || '' }}
+        run: |
+          set -euo pipefail
+          run_id="$EXPLICIT_RUN_ID"
+          if [ -z "$run_id" ]; then
+            run_id=$(gh run list \
+              --workflow build-trollstore-iphone-se3-ios15.yml \
+              --status success --limit 1 \
+              --json databaseId --jq '.[0].databaseId // empty')
+          fi
+          if [ -z "$run_id" ]; then
+            echo "::error::No successful build run found; supply source_run_id manually."
+            exit 1
+          fi
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "Publishing from run $run_id"
+
+      - name: Download TIPA artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          run-id: ${{ steps.source.outputs.run_id }}
+          github-token: ${{ github.token }}
+          path: dist
+
+      - name: Verify downloaded package
+        run: |
+          set -euo pipefail
+          file="dist/$ARTIFACT_NAME"
+          test -s "$file"
+          unzip -tqq "$file"
+          echo "Verified $file ($(du -h "$file" | cut -f1))"
+
+      - name: Create or update release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ inputs.tag || env.RELEASE_TAG }}
+          name: Reynard — TrollStore (iPhone SE 3 / iOS 15.4)
+          body: |
+            TrollStore build of Reynard for iPhone SE 3 (A15 / iPhone14,6) on iOS 15.4.
+
+            - Source Actions run: ${{ steps.source.outputs.run_id }}
+            - arm64, `MinimumOSVersion` ≤ 15.4, TrollStore JIT helper included
+            - Install with TrollStore on iOS 14 - 16.6.1 or 17.0
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: true
+          files: dist/${{ env.ARTIFACT_NAME }}
+          token: ${{ github.token }}
+
+      - name: Summary
+        run: |
+          {
+            echo "### Published TrollStore TIPA"
+            echo ""
+            echo "Artifact \`$ARTIFACT_NAME\` from run ${{ steps.source.outputs.run_id }} is attached to release \`${{ inputs.tag || env.RELEASE_TAG }}\`."
+          } >> "$GITHUB_STEP_SUMMARY"
