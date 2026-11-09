@@ -1,0 +1,119 @@
+name: Build TrollStore TIPA (iPhone SE 3 / iOS 15.4)
+
+on:
+  workflow_dispatch:
+    inputs:
+      checkout_ref:
+        description: Git ref to build (empty uses the current commit)
+        required: false
+        default: ''
+        type: string
+  push:
+    branches:
+      - main
+    paths:
+      - 'browser/Reynard/**'
+      - 'browser/Configuration/**'
+      - '.github/workflows/build.yml'
+      - '.github/workflows/build-trollstore-iphone-se3-ios15.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trollstore-iphone-se3-ios15-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build TrollStore TIPA
+    uses: ./.github/workflows/build.yml
+    with:
+      checkout_ref: ${{ inputs.checkout_ref || github.sha }}
+      nightly: false
+      build_normal_ipa: false
+      build_trollstore_tipa: true
+      build_jailbroken_ipa: false
+
+  package:
+    name: Verify and publish iPhone SE 3 / iOS 15.4 package
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download TrollStore TIPA
+        uses: actions/download-artifact@v4
+        with:
+          name: Reynard-TrollStore.tipa
+          path: dist
+          run-id: ${{ github.run_id }}
+          github-token: ${{ github.token }}
+
+      - name: Verify iOS 15.4 / iPhone SE 3 compatibility
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import plistlib
+          import struct
+          import zipfile
+          from pathlib import Path
+
+          tipa = Path("dist/Reynard-TrollStore.tipa")
+          app = "Payload/Reynard.app/"
+
+          with zipfile.ZipFile(tipa) as archive:
+              names = set(archive.namelist())
+              for name in (app + "Info.plist", app + "Reynard", app + "ts_ptrace_jit"):
+                  if name not in names:
+                      raise SystemExit("Missing TrollStore payload file: " + name)
+
+              info = plistlib.loads(archive.read(app + "Info.plist"))
+              minimum_os = info.get("MinimumOSVersion") or "13.0"
+              version = tuple(int(part) for part in minimum_os.split("."))[:2]
+              if version > (15, 4):
+                  raise SystemExit("MinimumOSVersion " + minimum_os + " exceeds iOS 15.4")
+
+              families = [int(value) for value in info.get("UIDeviceFamily", [1, 2])]
+              if 1 not in families:
+                  raise SystemExit("Package does not target iPhone (UIDeviceFamily 1)")
+
+              macho = archive.read(app + "Reynard")
+              little_magic = struct.unpack_from("<I", macho, 0)[0]
+              big_magic = struct.unpack_from(">I", macho, 0)[0]
+              if little_magic == 0xFEEDFACF:
+                  architectures = [struct.unpack_from("<I", macho, 4)[0]]
+              elif big_magic == 0xCAFEBABE:
+                  count = struct.unpack_from(">I", macho, 4)[0]
+                  architectures = [
+                      struct.unpack_from(">I", macho, 8 + index * 20)[0]
+                      for index in range(count)
+                  ]
+              else:
+                  raise SystemExit("Unrecognized Mach-O binary")
+
+              if 0x0100000C not in architectures:
+                  raise SystemExit("Package has no arm64 slice (required by iPhone SE 3 / A15)")
+
+              bundle_id = info.get("CFBundleIdentifier", "")
+              if not bundle_id:
+                  raise SystemExit("Missing CFBundleIdentifier")
+
+          print("Verified " + bundle_id + ": arm64, MinimumOSVersion " + minimum_os + ", TrollStore JIT helper present")
+          PY
+
+      - name: Name artifact for the target device
+        shell: bash
+        run: |
+          mv dist/Reynard-TrollStore.tipa dist/Reynard-TrollStore-iPhoneSE3-iOS15.4.tipa
+          {
+            echo "### iPhone SE 3 / iOS 15.4 TrollStore package"
+            echo ""
+            echo "Built from ${{ github.sha }}. Universal arm64 build (A15 / iPhone14,6), MinimumOSVersion <= 15.4, TrollStore JIT helper included."
+            echo "Install with TrollStore on iOS 14 - 16.6.1 or 17.0."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload target package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Reynard-TrollStore-iPhoneSE3-iOS15.4.tipa
+          path: dist/Reynard-TrollStore-iPhoneSE3-iOS15.4.tipa
+          if-no-files-found: error
