@@ -10,6 +10,21 @@ Besides providing an **alternative, up-to-date browser engine**[^1], Reynard sup
 
 [^1]: This is particularly useful on older iOS versions. Because WebKit is bundled with the OS, devices that no longer receive iOS updates are also stuck with an older browser engine, which can cause modern websites to break or render incorrectly.
 
+## About this fork
+
+This is an unofficial fork of [minh-ton/reynard-browser](https://github.com/minh-ton/reynard-browser) that adds **private browsing by default** (also called *force private mode*, *incognito by default*, or 默认无痕浏览).
+
+**Always Use Private Browsing** is a switch in `Settings → Privacy`. When enabled, Reynard starts in Private Browsing and new tabs, links, bookmarks and history entries open privately by default, similar to Safari's private-by-default behaviour. The switch takes effect immediately, and you can still switch back to the regular tab group in the tab overview.
+
+This implements [upstream issue #495 ("force private browser")](https://github.com/minh-ton/reynard-browser/issues/495). The upstream maintainer has said they do not intend to add this feature at the moment, and the corresponding pull request was closed without merging. **Please do not open issues or pull requests about this upstream** — use this fork instead.
+
+### Download this fork's build
+
+A universal TrollStore package is available in [this fork's Releases](https://github.com/EverybodyDiesInTheirNightmares/reynard-browser/releases/tag/trollstore-iphone-se3-ios15.4) as `Reynard-TrollStore.tipa`. It is arm64 with no device restrictions (minimum OS ≤ 15.4), so it works on any device supported by TrollStore (iOS 14 - 16.6.1, 17.0), including the iPhone SE 3 on iOS 15.4 — it is **not** an SE 3-specific build.
+
+> [!IMPORTANT]
+> The **Installation** section below links to the **upstream** official builds, which do **not** include this setting. Download this fork's package from the Releases link above instead.
+
 ## Installation
 
 The latest builds are available for download on the [Releases](https://github.com/minh-ton/reynard-browser/releases) page. Please note that this project is still in an early experimental state, so expect bugs and missing features.
