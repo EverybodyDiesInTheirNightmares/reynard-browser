@@ -42,24 +42,35 @@ jobs:
     steps:
       - name: Resolve source run
         id: source
-        env:
-          GH_TOKEN: ${{ github.token }}
-          EXPLICIT_RUN_ID: ${{ inputs.source_run_id || (github.event_name == 'workflow_run' && github.event.workflow_run.id) || '' }}
-        run: |
-          set -euo pipefail
-          run_id="$EXPLICIT_RUN_ID"
-          if [ -z "$run_id" ]; then
-            run_id=$(gh run list \
-              --workflow build-trollstore-iphone-se3-ios15.yml \
-              --status success --limit 1 \
-              --json databaseId --jq '.[0].databaseId // empty')
-          fi
-          if [ -z "$run_id" ]; then
-            echo "::error::No successful build run found; supply source_run_id manually."
-            exit 1
-          fi
-          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
-          echo "Publishing from run $run_id"
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const explicit = context.payload.inputs?.source_run_id;
+            const fromWorkflowRun = context.eventName === 'workflow_run'
+              ? context.payload.workflow_run.id
+              : null;
+
+            if (explicit || fromWorkflowRun) {
+              core.setOutput('run_id', String(explicit || fromWorkflowRun));
+              return;
+            }
+
+            const { data } = await github.rest.actions.listWorkflowRunsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 30,
+            });
+            const run = data.workflow_runs.find(item =>
+              item.name === 'Build TrollStore TIPA (iPhone SE 3 / iOS 15.4)' &&
+              item.conclusion === 'success'
+            );
+
+            if (!run) {
+              core.setFailed('No successful build run found; supply source_run_id manually.');
+              return;
+            }
+            core.info(`Publishing from run ${run.id}`);
+            core.setOutput('run_id', String(run.id));
 
       - name: Download TIPA artifact
         uses: actions/download-artifact@v4
