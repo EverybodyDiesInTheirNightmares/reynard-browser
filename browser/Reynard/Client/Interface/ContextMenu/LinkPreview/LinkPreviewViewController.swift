@@ -157,7 +157,8 @@ extension LinkPreviewViewController: ContentDelegate, NavigationDelegate, Histor
         lastVisitedURL: String?,
         flags: HistoryVisitFlags
     ) async -> Bool {
-        guard !session.isPrivateMode else {
+        guard !session.isPrivateMode,
+              Prefs.HistorySettings.recordsBrowsingHistory else {
             return false
         }
         
@@ -165,7 +166,8 @@ extension LinkPreviewViewController: ContentDelegate, NavigationDelegate, Histor
     }
     
     func getVisited(session: GeckoSession, urls: [String]) async -> [Bool]? {
-        guard !session.isPrivateMode else {
+        guard !session.isPrivateMode,
+              Prefs.HistorySettings.recordsBrowsingHistory else {
             return Array(repeating: false, count: urls.count)
         }
         

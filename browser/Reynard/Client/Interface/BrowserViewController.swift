@@ -156,6 +156,7 @@ final class BrowserViewController: UIViewController, GeckoScreenOrientationDeleg
         }
         
         RuntimePreferences.apply() // Gecko prefs
+        clearBrowsingHistoryIfNeeded()
         
         configureBrowserInterface()
         observeNotifications()
@@ -812,6 +813,25 @@ final class BrowserViewController: UIViewController, GeckoScreenOrientationDeleg
         }
         
         action()
+    }
+    
+    // MARK: - Private Shortcut
+    
+    private func clearBrowsingHistoryIfNeeded() {
+        guard !Prefs.HistorySettings.recordsBrowsingHistory else {
+            return
+        }
+        
+        HistoryStore.shared.clearVisits(since: nil)
+        _ = TabManagementStore.shared.clearRecentlyClosedTabs()
+        
+        Task {
+            do {
+                try await GeckoStorageController.clearHistory(since: nil)
+            } catch {
+                NSLog("Failed to clear Gecko history: %@", "\(error)")
+            }
+        }
     }
     
     // MARK: - Notifications

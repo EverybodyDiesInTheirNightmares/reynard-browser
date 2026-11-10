@@ -181,8 +181,55 @@ extension BrowserViewController: ContentOverlayCoordinatorHost, SearchOverlayCoo
     // MARK: - Address Bar Search Delegate
     
     func addressBarDidSubmit(_ searchTerm: String) {
+        if handlePrivateShortcutCommand(searchTerm) {
+            return
+        }
+        
         homepageOverlayCoordinator.addressBarDidSubmit(searchTerm)
         searchOverlayCoordinator.addressBarDidSubmit(searchTerm)
+    }
+    
+    private func handlePrivateShortcutCommand(_ input: String) -> Bool {
+        switch input.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+        case "mmmm":
+            endSearchEditing()
+            openPrivateShortcutTarget()
+            return true
+        case "pppp":
+            endSearchEditing()
+            presentPrivateShortcutSettings()
+            return true
+        default:
+            return false
+        }
+    }
+    
+    private func openPrivateShortcutTarget() {
+        guard let url = Prefs.PrivateShortcutSettings.normalizedTargetURL else {
+            AlertPresenter.show(
+                title: NSLocalizedString("Invalid Address", comment: ""),
+                message: NSLocalizedString("Enter a valid http or https address.", comment: "")
+            )
+            return
+        }
+        
+        let address = url.absoluteString
+        if tabManager.selectedTabMode == .private {
+            let index = tabManager.createTab(selecting: true, mode: .regular)
+            guard let tab = tabManager.regularTabs[safe: index] else {
+                return
+            }
+            tabManager.browse(to: address, in: tab)
+        } else {
+            tabManager.browse(to: address)
+        }
+    }
+    
+    private func presentPrivateShortcutSettings() {
+        let controller = PrivateShortcutPreferencesViewController(showsDoneButton: true)
+        let navigationController = UINavigationController(rootViewController: controller)
+        navigationController.modalPresentationStyle = .formSheet
+        present(navigationController, animated: true)
     }
     
     func addressBarDidTapDismiss(_ addressBar: AddressBar) {

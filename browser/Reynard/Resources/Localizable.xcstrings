@@ -24755,6 +24755,118 @@
         }
       }
     },
+    "Enter a valid http or https address." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter a valid http or https address."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请输入有效的 http 或 https 地址。"
+          }
+        }
+      }
+    },
+    "Invalid Address" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invalid Address"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "地址无效"
+          }
+        }
+      }
+    },
+    "Private Shortcut" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Private Shortcut"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "隐私快捷入口"
+          }
+        }
+      }
+    },
+    "Record Browsing History" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Record Browsing History"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "记录浏览历史"
+          }
+        }
+      }
+    },
+    "Shortcut Target" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shortcut Target"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "快捷入口网址"
+          }
+        }
+      }
+    },
+    "Type mmmm in the address bar to open this website, or pppp to return to this page." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type mmmm in the address bar to open this website, or pppp to return to this page."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在地址栏输入 mmmm 打开此网址；输入 pppp 返回本页。"
+          }
+        }
+      }
+    },
+    "When off, Reynard does not add pages to history and clears existing history on launch. Sign-ins are kept." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When off, Reynard does not add pages to history and clears existing history on launch. Sign-ins are kept."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭后，Reynard 不会把网页加入历史，并在每次启动时清除已有历史；登录状态会保留。"
+          }
+        }
+      }
+    },
     "Settings" : {
       "localizations" : {
         "cs" : {

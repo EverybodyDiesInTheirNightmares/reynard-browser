@@ -79,6 +79,12 @@ final class BrowserPreferences {
             // Private Browsing
             key("PrivateBrowsingSettings", "alwaysUsePrivateBrowsing"): false,
             
+            // Private Shortcut
+            key("PrivateShortcutSettings", "targetURL"): "https://example.com",
+            
+            // History
+            key("HistorySettings", "recordsBrowsingHistory"): false,
+            
             // New Tab
             key("NewTabSettings", "newTabDisplayOption"): NewTabDisplayOption.homepage.rawValue,
             key("NewTabSettings", "customNewTabURL"): "",
@@ -410,6 +416,41 @@ final class BrowserPreferences {
             set {
                 prefs.set(newValue, forSetting: "PrivateBrowsingSettings", key: "alwaysUsePrivateBrowsing")
                 NotificationCenter.default.post(name: .privateBrowsingSettingsDidChange, object: nil)
+            }
+        }
+    }
+    
+    // MARK: - Private Shortcut
+    struct PrivateShortcutSettings {
+        static let defaultTargetURL = "https://example.com"
+        
+        static var targetURL: String {
+            get {
+                let value = prefs.string(forSetting: "PrivateShortcutSettings", key: "targetURL") ?? ""
+                return value.isEmpty ? defaultTargetURL : value
+            }
+            set {
+                prefs.set(
+                    newValue.trimmingCharacters(in: .whitespacesAndNewlines),
+                    forSetting: "PrivateShortcutSettings",
+                    key: "targetURL"
+                )
+            }
+        }
+        
+        static var normalizedTargetURL: URL? {
+            return URLUtils.normalizedCustomURL(from: targetURL)
+        }
+    }
+    
+    // MARK: - History
+    struct HistorySettings {
+        static var recordsBrowsingHistory: Bool {
+            get {
+                return prefs.bool(forSetting: "HistorySettings", key: "recordsBrowsingHistory")
+            }
+            set {
+                prefs.set(newValue, forSetting: "HistorySettings", key: "recordsBrowsingHistory")
             }
         }
     }

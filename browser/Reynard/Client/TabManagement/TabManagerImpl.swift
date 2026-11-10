@@ -247,6 +247,7 @@ final class TabManagerImplementation: NSObject, TabManager {
     
     private func recordTransferredHistory(for tab: Tab, title: String?) {
         guard !tab.isPrivate,
+              Prefs.HistorySettings.recordsBrowsingHistory,
               let url = remoteURL(from: tab.url) else {
             return
         }
@@ -1356,6 +1357,7 @@ extension TabManagerImplementation: ContentDelegate {
             sessionManager.updateCurrentHistoryTitle(title, for: tab.id, matching: url)
         }
         if !tab.isPrivate,
+           Prefs.HistorySettings.recordsBrowsingHistory,
            let url = remoteURL(from: tab.url) {
             historyStore.updatePageTitle(for: url, title: title)
         }
@@ -1730,6 +1732,7 @@ extension TabManagerImplementation: HistoryDelegate {
         flags: HistoryVisitFlags
     ) async -> Bool {
         guard !session.isPrivateMode,
+              Prefs.HistorySettings.recordsBrowsingHistory,
               flags.contains(.topLevel),
               !flags.contains(.unrecoverableError),
               let pageURL = remoteURL(from: url) else {
@@ -1745,7 +1748,8 @@ extension TabManagerImplementation: HistoryDelegate {
     }
     
     func getVisited(session: GeckoSession, urls: [String]) async -> [Bool]? {
-        guard !session.isPrivateMode else {
+        guard !session.isPrivateMode,
+              Prefs.HistorySettings.recordsBrowsingHistory else {
             return Array(repeating: false, count: urls.count)
         }
         
