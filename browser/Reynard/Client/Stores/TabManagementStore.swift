@@ -221,6 +221,34 @@ final class TabManagementStore {
         stateQueue.sync {}
     }
     
+    @discardableResult
+    func discardPersistedTabs() -> Bool {
+        return stateQueue.sync {
+            guard self.executeLocked("BEGIN IMMEDIATE TRANSACTION;") else {
+                return false
+            }
+            
+            guard self.executeLocked("DELETE FROM tabs;"),
+                  self.saveStateLocked(
+                    selectedRegularTabID: nil,
+                    selectedPrivateTabID: nil,
+                    selectedTabMode: .regular,
+                    lastTabOverview: .regular
+                  ) else {
+                _ = self.executeLocked("ROLLBACK TRANSACTION;")
+                return false
+            }
+            
+            guard self.executeLocked("COMMIT TRANSACTION;") else {
+                _ = self.executeLocked("ROLLBACK TRANSACTION;")
+                return false
+            }
+            
+            self.pruneThumbCacheLocked(validTabIDs: [])
+            return true
+        }
+    }
+    
     func persistLastOverview(_ lastTabOverview: LastTabOverview) {
         stateQueue.async {
             let state = self.persistedStateLocked()

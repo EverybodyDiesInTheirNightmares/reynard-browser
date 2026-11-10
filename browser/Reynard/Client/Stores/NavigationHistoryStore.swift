@@ -353,6 +353,27 @@ final class NavigationHistoryStore {
         }
     }
     
+    func removeAllNavigationHistory() {
+        queue.async {
+            self.historyCache.removeAll()
+            self.pendingHistories.removeAll()
+            let storageURL = self.storageURL
+            self.persistenceQueue.async {
+                guard let fileURLs = try? self.fileManager.contentsOfDirectory(
+                    at: storageURL,
+                    includingPropertiesForKeys: nil,
+                    options: [.skipsHiddenFiles]
+                ) else {
+                    return
+                }
+                
+                for fileURL in fileURLs {
+                    try? self.fileManager.removeItem(at: fileURL)
+                }
+            }
+        }
+    }
+    
     func removeNavigationHistory(for tabID: UUID) {
         queue.async {
             self.historyCache.removeValue(forKey: tabID)

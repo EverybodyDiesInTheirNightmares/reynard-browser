@@ -406,9 +406,20 @@ final class TabManagerImplementation: NSObject, TabManager {
         }
     }
     
+    private func discardPersistedBrowsingState() {
+        store.discardPersistedTabs()
+        store.clearRecentlyClosedTabs()
+        NavigationHistoryStore.shared.removeAllNavigationHistory()
+    }
+    
     private func restoreTabsIfNeeded(restoringLastSession: Bool = true) -> Bool {
         guard regularTabs.isEmpty && privateTabs.isEmpty else {
             return true
+        }
+        
+        guard Prefs.HistorySettings.recordsBrowsingHistory else {
+            discardPersistedBrowsingState()
+            return false
         }
         
         let snapshot = store.currentSnapshot()
