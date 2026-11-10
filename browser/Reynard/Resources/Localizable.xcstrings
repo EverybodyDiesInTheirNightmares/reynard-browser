@@ -24867,6 +24867,70 @@
         }
       }
     },
+    "Open pppp and set this shortcut first." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open pppp and set this shortcut first."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请先用 pppp 设置这个快捷入口。"
+          }
+        }
+      }
+    },
+    "Shortcut Not Set" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shortcut Not Set"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "快捷入口未设置"
+          }
+        }
+      }
+    },
+    "Type llll in the address bar to open this website." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type llll in the address bar to open this website."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在地址栏输入 llll 打开此网址。"
+          }
+        }
+      }
+    },
+    "Type oooo in the address bar to open this website." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Type oooo in the address bar to open this website."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "在地址栏输入 oooo 打开此网址。"
+          }
+        }
+      }
+    },
     "Settings" : {
       "localizations" : {
         "cs" : {

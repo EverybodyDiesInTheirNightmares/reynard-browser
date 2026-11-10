@@ -81,6 +81,8 @@ final class BrowserPreferences {
             
             // Private Shortcut
             key("PrivateShortcutSettings", "targetURL"): "https://example.com",
+            key("PrivateShortcutSettings", "secondaryTargetURL"): "",
+            key("PrivateShortcutSettings", "tertiaryTargetURL"): "",
             
             // History
             key("HistorySettings", "recordsBrowsingHistory"): false,
@@ -438,8 +440,44 @@ final class BrowserPreferences {
             }
         }
         
+        static var secondaryTargetURL: String {
+            get {
+                let value = prefs.string(forSetting: "PrivateShortcutSettings", key: "secondaryTargetURL") ?? ""
+                return value.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            set {
+                prefs.set(
+                    newValue.trimmingCharacters(in: .whitespacesAndNewlines),
+                    forSetting: "PrivateShortcutSettings",
+                    key: "secondaryTargetURL"
+                )
+            }
+        }
+        
+        static var tertiaryTargetURL: String {
+            get {
+                let value = prefs.string(forSetting: "PrivateShortcutSettings", key: "tertiaryTargetURL") ?? ""
+                return value.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            set {
+                prefs.set(
+                    newValue.trimmingCharacters(in: .whitespacesAndNewlines),
+                    forSetting: "PrivateShortcutSettings",
+                    key: "tertiaryTargetURL"
+                )
+            }
+        }
+        
         static var normalizedTargetURL: URL? {
             return URLUtils.normalizedCustomURL(from: targetURL)
+        }
+        
+        static var normalizedSecondaryTargetURL: URL? {
+            return URLUtils.normalizedCustomURL(from: secondaryTargetURL)
+        }
+        
+        static var normalizedTertiaryTargetURL: URL? {
+            return URLUtils.normalizedCustomURL(from: tertiaryTargetURL)
         }
     }
     

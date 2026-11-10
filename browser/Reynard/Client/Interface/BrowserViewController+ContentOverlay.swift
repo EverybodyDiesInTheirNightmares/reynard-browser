@@ -193,7 +193,15 @@ extension BrowserViewController: ContentOverlayCoordinatorHost, SearchOverlayCoo
         switch input.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
         case "mmmm":
             endSearchEditing()
-            openPrivateShortcutTarget()
+            openPrivateShortcutTarget(Prefs.PrivateShortcutSettings.normalizedTargetURL)
+            return true
+        case "llll":
+            endSearchEditing()
+            openPrivateShortcutTarget(Prefs.PrivateShortcutSettings.normalizedSecondaryTargetURL)
+            return true
+        case "oooo":
+            endSearchEditing()
+            openPrivateShortcutTarget(Prefs.PrivateShortcutSettings.normalizedTertiaryTargetURL)
             return true
         case "pppp":
             endSearchEditing()
@@ -204,11 +212,11 @@ extension BrowserViewController: ContentOverlayCoordinatorHost, SearchOverlayCoo
         }
     }
     
-    private func openPrivateShortcutTarget() {
-        guard let url = Prefs.PrivateShortcutSettings.normalizedTargetURL else {
+    private func openPrivateShortcutTarget(_ url: URL?) {
+        guard let url else {
             AlertPresenter.show(
-                title: NSLocalizedString("Invalid Address", comment: ""),
-                message: NSLocalizedString("Enter a valid http or https address.", comment: "")
+                title: NSLocalizedString("Shortcut Not Set", comment: ""),
+                message: NSLocalizedString("Open pppp and set this shortcut first.", comment: "")
             )
             return
         }

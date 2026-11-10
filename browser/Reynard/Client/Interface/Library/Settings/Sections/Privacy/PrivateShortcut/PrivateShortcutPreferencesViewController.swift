@@ -11,21 +11,44 @@ final class PrivateShortcutPreferencesViewController: SettingsTableViewControlle
     }
     
     private enum Section: CaseIterable {
-        case target
+        case primary
+        case secondary
+        case tertiary
         case history
         
         var text: SettingsSectionText {
             switch self {
-            case .target:
+            case .primary:
                 return SettingsSectionText(
-                    headerTitle: NSLocalizedString("Shortcut Target", comment: ""),
+                    headerTitle: "mmmm",
                     footerTitle: NSLocalizedString("Type mmmm in the address bar to open this website, or pppp to return to this page.", comment: "")
+                )
+            case .secondary:
+                return SettingsSectionText(
+                    headerTitle: "llll",
+                    footerTitle: NSLocalizedString("Type llll in the address bar to open this website.", comment: "")
+                )
+            case .tertiary:
+                return SettingsSectionText(
+                    headerTitle: "oooo",
+                    footerTitle: NSLocalizedString("Type oooo in the address bar to open this website.", comment: "")
                 )
             case .history:
                 return SettingsSectionText(
                     headerTitle: NSLocalizedString("History", comment: ""),
                     footerTitle: NSLocalizedString("When off, Reynard does not add pages to history and clears existing history on launch. Sign-ins are kept.", comment: "")
                 )
+            }
+        }
+        
+        var placeholder: String {
+            switch self {
+            case .primary:
+                return Prefs.PrivateShortcutSettings.defaultTargetURL
+            case .secondary, .tertiary:
+                return "https://"
+            case .history:
+                return ""
             }
         }
     }
@@ -98,8 +121,9 @@ final class PrivateShortcutPreferencesViewController: SettingsTableViewControlle
             return UITableViewCell()
         }
         
-        switch Section.allCases[indexPath.section] {
-        case .target:
+        let section = Section.allCases[indexPath.section]
+        switch section {
+        case .primary, .secondary, .tertiary:
             guard let cell = tableView.dequeueReusableCell(
                 withIdentifier: UX.targetCellReuseIdentifier,
                 for: indexPath
@@ -107,8 +131,8 @@ final class PrivateShortcutPreferencesViewController: SettingsTableViewControlle
                 return UITableViewCell()
             }
             cell.textField.delegate = self
-            cell.textField.placeholder = Prefs.PrivateShortcutSettings.defaultTargetURL
-            cell.textField.text = Prefs.PrivateShortcutSettings.targetURL
+            cell.textField.placeholder = section.placeholder
+            cell.textField.text = targetValue(for: section)
             return cell
         case .history:
             let cell = SettingsTableViewCell(style: .default, reuseIdentifier: nil)
@@ -120,12 +144,12 @@ final class PrivateShortcutPreferencesViewController: SettingsTableViewControlle
     }
     
     @objc private func saveButtonTapped() {
-        saveTarget()
+        saveVisibleTargets()
         view.endEditing(true)
     }
     
     @objc private func doneButtonTapped() {
-        saveTarget()
+        saveVisibleTargets()
         dismiss(animated: true)
     }
     
@@ -133,17 +157,29 @@ final class PrivateShortcutPreferencesViewController: SettingsTableViewControlle
         Prefs.HistorySettings.recordsBrowsingHistory = sender.isOn
     }
     
-    private func saveTarget() {
-        guard let cell = tableView.cellForRow(
-            at: IndexPath(row: 0, section: 0)
-        ) as? CustomSearchTemplateCell else {
-            return
+    private func saveVisibleTargets() {
+        for section in [Section.primary, .secondary, .tertiary] {
+            guard let index = Section.allCases.firstIndex(of: section),
+                  let cell = tableView.cellForRow(
+                    at: IndexPath(row: 0, section: index)
+                  ) as? CustomSearchTemplateCell else {
+                continue
+            }
+            saveTarget(for: section, in: cell)
         }
-        
+    }
+    
+    private func saveTarget(for section: Section, in cell: CustomSearchTemplateCell) {
         let value = (cell.textField.text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !value.isEmpty else {
-            cell.textField.text = Prefs.PrivateShortcutSettings.defaultTargetURL
-            Prefs.PrivateShortcutSettings.targetURL = Prefs.PrivateShortcutSettings.defaultTargetURL
+        
+        if value.isEmpty {
+            if section == .primary {
+                cell.textField.text = Prefs.PrivateShortcutSettings.defaultTargetURL
+                setTargetURL(Prefs.PrivateShortcutSettings.defaultTargetURL, for: section)
+            } else {
+                cell.textField.text = ""
+                setTargetURL("", for: section)
+            }
             return
         }
         
@@ -152,12 +188,38 @@ final class PrivateShortcutPreferencesViewController: SettingsTableViewControlle
                 title: NSLocalizedString("Invalid Address", comment: ""),
                 message: NSLocalizedString("Enter a valid http or https address.", comment: "")
             )
-            cell.textField.text = Prefs.PrivateShortcutSettings.targetURL
+            cell.textField.text = targetValue(for: section)
             return
         }
         
-        Prefs.PrivateShortcutSettings.targetURL = url.absoluteString
+        setTargetURL(url.absoluteString, for: section)
         cell.textField.text = url.absoluteString
+    }
+    
+    private func targetValue(for section: Section) -> String {
+        switch section {
+        case .primary:
+            return Prefs.PrivateShortcutSettings.targetURL
+        case .secondary:
+            return Prefs.PrivateShortcutSettings.secondaryTargetURL
+        case .tertiary:
+            return Prefs.PrivateShortcutSettings.tertiaryTargetURL
+        case .history:
+            return ""
+        }
+    }
+    
+    private func setTargetURL(_ value: String, for section: Section) {
+        switch section {
+        case .primary:
+            Prefs.PrivateShortcutSettings.targetURL = value
+        case .secondary:
+            Prefs.PrivateShortcutSettings.secondaryTargetURL = value
+        case .tertiary:
+            Prefs.PrivateShortcutSettings.tertiaryTargetURL = value
+        case .history:
+            break
+        }
     }
 }
 
@@ -165,12 +227,24 @@ final class PrivateShortcutPreferencesViewController: SettingsTableViewControlle
 
 extension PrivateShortcutPreferencesViewController: UITextFieldDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        saveTarget()
+        saveTarget(for: textField)
         textField.resignFirstResponder()
         return true
     }
     
     func textFieldDidEndEditing(_ textField: UITextField) {
-        saveTarget()
+        saveTarget(for: textField)
+    }
+    
+    private func saveTarget(for textField: UITextField) {
+        guard let cell = tableView.visibleCells
+            .compactMap({ $0 as? CustomSearchTemplateCell })
+            .first(where: { $0.textField === textField }),
+            let indexPath = tableView.indexPath(for: cell),
+            Section.allCases.indices.contains(indexPath.section) else {
+            return
+        }
+        
+        saveTarget(for: Section.allCases[indexPath.section], in: cell)
     }
 }
