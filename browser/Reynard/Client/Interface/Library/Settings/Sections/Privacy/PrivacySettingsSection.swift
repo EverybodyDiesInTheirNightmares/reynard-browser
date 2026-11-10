@@ -10,7 +10,6 @@ import UIKit
 final class PrivacySettingsSection: NSObject {
     enum Row: CaseIterable {
         case alwaysUsePrivateBrowsing
-        case privateShortcut
         case sitePermissions
         case httpsOnlyMode
         case dnsOverHTTPS
@@ -50,8 +49,6 @@ final class PrivacySettingsSection: NSObject {
             cell.detailTextLabel?.numberOfLines = 0
             cell.accessoryView = alwaysUsePrivateBrowsingSwitch
             return cell
-        case .privateShortcut:
-            return SettingsViewUtils.disclosureCell(title: NSLocalizedString("Private Shortcut", comment: ""))
         case .sitePermissions:
             return SettingsViewUtils.disclosureCell(title: NSLocalizedString("Website Permissions", comment: ""))
         case .httpsOnlyMode:
@@ -71,9 +68,6 @@ final class PrivacySettingsSection: NSObject {
         switch Row.allCases[index] {
         case .alwaysUsePrivateBrowsing:
             return
-        case .privateShortcut:
-            let destination = PrivateShortcutPreferencesViewController()
-            viewController.navigationController?.pushViewController(destination, animated: true)
         case .sitePermissions:
             let destination = SitePermissionsViewController()
             viewController.navigationController?.pushViewController(destination, animated: true)
